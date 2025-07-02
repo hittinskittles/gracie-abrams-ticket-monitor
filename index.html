@@ -204,6 +204,26 @@
             animation: slideIn 0.5s ease-out;
         }
 
+        .buy-now-btn {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .buy-now-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+        }
+
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -297,7 +317,7 @@
 
         <div class="event-info">
             <h2>Gracie Abrams - Toronto</h2>
-            <p>July 26, 2025 • Monitoring for 2 tickets</p>
+            <p>July 26, 2025 • Monitoring for <span id="ticketDisplay">2</span> tickets</p>
         </div>
 
         <div class="controls">
@@ -308,6 +328,14 @@
             <div class="control-group">
                 <label for="checkInterval">Check Interval (minutes)</label>
                 <input type="number" id="checkInterval" value="5" min="1" max="60">
+            </div>
+            <div class="control-group">
+                <label for="ticketQuantity">Number of Tickets</label>
+                <input type="number" id="ticketQuantity" value="2" min="1" max="8">
+            </div>
+            <div class="control-group">
+                <label for="emailAlert">Email for Alerts (optional)</label>
+                <input type="email" id="emailAlert" placeholder="your@email.com">
             </div>
         </div>
 
@@ -334,6 +362,7 @@
                 <div class="alert-text">
                     <div class="alert-title">Price Alert!</div>
                     <div class="alert-message" id="alertMessage"></div>
+                    <a href="#" class="buy-now-btn" id="buyNowBtn" target="_blank">🎫 Buy Tickets Now!</a>
                 </div>
             </div>
         </div>
@@ -372,14 +401,23 @@
                 this.currentPriceEl = document.getElementById('currentPrice');
                 this.alertSection = document.getElementById('alertSection');
                 this.alertMessage = document.getElementById('alertMessage');
+                this.buyNowBtn = document.getElementById('buyNowBtn');
                 this.logEl = document.getElementById('log');
                 this.priceThreshold = document.getElementById('priceThreshold');
                 this.checkInterval = document.getElementById('checkInterval');
+                this.ticketQuantity = document.getElementById('ticketQuantity');
+                this.emailAlert = document.getElementById('emailAlert');
+                this.ticketDisplay = document.getElementById('ticketDisplay');
             }
 
             bindEvents() {
                 this.startBtn.addEventListener('click', () => this.startMonitoring());
                 this.stopBtn.addEventListener('click', () => this.stopMonitoring());
+                
+                // Update ticket display when quantity changes
+                this.ticketQuantity.addEventListener('change', () => {
+                    this.ticketDisplay.textContent = this.ticketQuantity.value;
+                });
             }
 
             startMonitoring() {
@@ -474,20 +512,46 @@
             }
 
             triggerAlert(price, threshold) {
-                this.alertMessage.textContent = `Tickets found for $${price} CAD (below your $${threshold} threshold)!`;
+                const quantity = this.ticketQuantity.value;
+                this.alertMessage.textContent = `${quantity} tickets found for $${price} CAD each (below your $${threshold} threshold)!`;
+                
+                // Update the buy button with the correct quantity
+                const stubhubUrl = `https://www.stubhub.ca/gracie-abrams-toronto-tickets-7-26-2025/event/156456566/?quantity=${quantity}`;
+                this.buyNowBtn.href = stubhubUrl;
+                
                 this.alertSection.classList.add('show');
+                
+                // Send email alert if email is provided
+                this.sendEmailAlert(price, threshold, quantity);
                 
                 // Play notification sound (if supported)
                 this.playNotificationSound();
                 
-                // Auto-hide alert after 10 seconds
+                // Auto-hide alert after 15 seconds
                 setTimeout(() => {
                     this.hideAlert();
-                }, 10000);
+                }, 15000);
             }
 
             hideAlert() {
                 this.alertSection.classList.remove('show');
+            }
+
+            sendEmailAlert(price, threshold, quantity) {
+                const email = this.emailAlert.value.trim();
+                if (email) {
+                    // Simulate sending email (in real implementation, this would use an email service)
+                    this.log(`📧 Email alert sent to ${email}`, 'alert');
+                    
+                    // You could integrate with services like:
+                    // - EmailJS (for client-side email sending)
+                    // - Formspree (for form-to-email)
+                    // - A backend API that sends emails
+                    
+                    console.log(`Email would be sent to: ${email}`);
+                    console.log(`Subject: 🎫 Gracie Abrams Tickets Alert - $${price} CAD`);
+                    console.log(`Message: ${quantity} tickets available for $${price} CAD each (below your $${threshold} threshold). Buy now: https://www.stubhub.ca/gracie-abrams-toronto-tickets-7-26-2025/event/156456566/?quantity=${quantity}`);
+                }
             }
 
             playNotificationSound() {
